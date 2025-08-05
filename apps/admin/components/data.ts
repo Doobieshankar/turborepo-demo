@@ -5,6 +5,7 @@ export type Drone = {
   name: string;
   type: string;
   status: string; // You can later restrict to specific strings if needed
+  createdAt?: string;
 };
 
 export const droneData: Drone[] = [

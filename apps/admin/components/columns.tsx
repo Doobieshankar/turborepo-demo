@@ -60,7 +60,7 @@ export const columns = (
 
 // columns.ts
 import { useState } from "react";
-import { Drone } from "./data";
+import { Drone } from "@prisma/client";
 import { ColumnDef } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button";
 import {
@@ -78,6 +78,11 @@ export const columns = (
   handleView: (drone: Drone) => void
 ): ColumnDef<Drone>[] => [
   {
+    accessorKey: "id",
+    header: "Id",
+    enableSorting: true,
+  },
+  {
     accessorKey: "name",
     header: "Name",
     enableSorting: true,
@@ -93,6 +98,11 @@ export const columns = (
     enableSorting: true,
   },
   {
+    accessorKey: "createdAt",
+    header: "CreatedAt",
+    enableSorting: true,
+  },
+  /* {
     id: "actions",
     header: "Actions",
     cell: ({ row }) => {
@@ -128,6 +138,53 @@ export const columns = (
             onOpenChange={setDeleteDialogOpen}
             drone={drone}
             onDelete={() => handleDelete(drone.id)}
+          />
+        </>
+      );
+    },
+  }, */
+  {
+    id: "actions",
+    header: "Actions",
+    cell: ({ row }) => {
+      const drone = row.original;
+      const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+
+      return (
+        <>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" className="h-8 w-8 p-0">
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onSelect={() => handleView(drone)}>
+                View
+              </DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => handleEdit(drone)}>
+                Edit
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onSelect={(e) => {
+                  e.preventDefault(); // Prevent dropdown from closing too early
+                  setDeleteDialogOpen(true);
+                }}
+                className="text-red-600 focus:text-red-600"
+              >
+                Delete
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          <DeleteDroneDialog
+            open={deleteDialogOpen}
+            onOpenChange={setDeleteDialogOpen}
+            drone={drone}
+            onDelete={() => {
+              handleDelete(drone.id);
+              setDeleteDialogOpen(false);
+            }}
           />
         </>
       );

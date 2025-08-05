@@ -1,116 +1,94 @@
-/* "use client";
-
-import {
-  getCoreRowModel,
-  getFilteredRowModel,
-  useReactTable,
-  ColumnDef,
-  flexRender,
-} from "@tanstack/react-table";
-import { useState } from "react";
-
-import { Input } from "@/components/ui/input";
-import { Drone, droneData } from "./data";
-import { columns as getColumns } from "./columns";
-import { EditDroneDialog } from "./edit-drone-dialog";
-
-export function DroneTable() {
-  const [globalFilter, setGlobalFilter] = useState("");
-  const [editingDrone, setEditingDrone] = useState<Drone | null>(null);
-
-  const columns: ColumnDef<Drone>[] = getColumns((drone) =>
-    setEditingDrone(drone)
-  );
-
-  const table = useReactTable({
-    data: droneData,
-    columns,
-    state: {
-      globalFilter,
-    },
-    onGlobalFilterChange: setGlobalFilter,
-    getCoreRowModel: getCoreRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-  });
-
-  return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h2 className="text-xl font-semibold">Drone Management</h2>
-        <Input
-          placeholder="Search drones..."
-          value={globalFilter}
-          onChange={(e) => setGlobalFilter(e.target.value)}
-          className="max-w-sm"
-        />
-      </div>
-
-      <div className="rounded-md border">
-        <table className="w-full table-auto text-sm">
-          <thead className="bg-muted">
-            {table.getHeaderGroups().map((headerGroup) => (
-              <tr key={headerGroup.id}>
-                {headerGroup.headers.map((header) => (
-                  <th
-                    key={header.id}
-                    className="px-4 py-2 text-left font-medium"
-                  >
-                    {header.isPlaceholder
-                      ? null
-                      : flexRender(
-                          header.column.columnDef.header,
-                          header.getContext()
-                        )}
-                  </th>
-                ))}
-              </tr>
-            ))}
-          </thead>
-          <tbody>
-            {table.getRowModel().rows.map((row) => (
-              <tr key={row.id} className="border-t">
-                {row.getVisibleCells().map((cell) => (
-                  <td key={cell.id} className="px-4 py-2">
-                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                  </td>
-                ))}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-
-      {editingDrone && (
-        <EditDroneDialog
-          drone={editingDrone}
-          open={true}
-          onOpenChange={(open) => {
-            if (!open) setEditingDrone(null);
-          }}
-        />
-      )}
-    </div>
-  );
-}
- */
+/* 
 
 // drone-table.tsx
 
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { columns as droneColumns } from "./columns";
-import { droneData, Drone } from "./data";
+import { Drone } from "@prisma/client";
 import { DataTable } from "@/components/ui/data-table";
 import { EditDroneDialog } from "./edit-drone-dialog";
 import { toast } from "sonner";
 import { DronePreviewDrawer } from "./drone-preview-drawer";
 
 export function DroneTable() {
-  const [drones, setDrones] = useState(droneData);
+  const [drones, setDrones] = useState<Drone[]>([]);
   const [editingDrone, setEditingDrone] = useState<Drone | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [selectedDrone, setSelectedDrone] = useState<Drone | null>(null);
 
+  const handleView = (
+    drone: Pick<Drone, "id" | "name" | "type" | "status" | "createdAt">
+  ) => {
+    setSelectedDrone(drone);
+    setDrawerOpen(true);
+  };
+
+  const handleEdit = (
+    drone: Pick<Drone, "id" | "name" | "type" | "status" | "createdAt">
+  ) => {
+    setEditingDrone(drone);
+    setDialogOpen(true);
+    toast.success("Drone updated successfully"); // This toast may be better after a successful PUT call
+  };
+
+  const handleDelete = (droneId: string) => {
+    setDrones((prev) => prev.filter((d) => d.id !== droneId));
+    toast.success("Drone deleted successfully"); // Same here — better after DELETE call
+  };
+
+  useEffect(() => {
+    fetch("/api/drones")
+      .then((res) => {
+        if (!res.ok) throw new Error("Network response was not ok");
+        return res.json();
+      })
+      .then(setDrones)
+      .catch(() => toast.error("Failed to fetch drones"));
+  }, []); // ✅ Only run once on mount
+
+  return (
+    <>
+      <DataTable
+        columns={droneColumns(handleEdit, handleDelete, handleView)}
+        data={drones}
+      />
+
+      {editingDrone && (
+        <EditDroneDialog
+          open={dialogOpen}
+          onOpenChange={setDialogOpen}
+          drone={editingDrone}
+        />
+      )}
+
+      <DronePreviewDrawer
+        open={drawerOpen}
+        onOpenChange={setDrawerOpen}
+        drone={selectedDrone}
+      />
+    </>
+  );
+}
+ */
+// drone-table.tsx
+
+"use client";
+
+import { useState, useEffect } from "react";
+import { columns as droneColumns } from "./columns";
+import { Drone } from "@prisma/client";
+import { DataTable } from "@/components/ui/data-table";
+import { EditDroneDialog } from "./edit-drone-dialog";
+import { toast } from "sonner";
+import { DronePreviewDrawer } from "./drone-preview-drawer";
+
+export function DroneTable() {
+  const [drones, setDrones] = useState<Drone[]>([]);
+  const [editingDrone, setEditingDrone] = useState<Drone | null>(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [selectedDrone, setSelectedDrone] = useState<Drone | null>(null);
 
@@ -122,13 +100,68 @@ export function DroneTable() {
   const handleEdit = (drone: Drone) => {
     setEditingDrone(drone);
     setDialogOpen(true);
-    toast.success("Drone updated successfully");
+    // toast.success("Drone updated successfully"); // ✅ Move this after successful PUT later
   };
 
-  const handleDelete = (droneId: string) => {
+  const handleEditSubmit = async (updatedDrone: Drone) => {
+    try {
+      console.log("Updated Drone:", updatedDrone);
+      const res = await fetch(`/api/drones/${updatedDrone.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(updatedDrone),
+      });
+
+      if (!res.ok) throw new Error("Failed to update");
+
+      const newDrone = await res.json();
+
+      setDrones((prev) =>
+        prev.map((d) => (d.id === newDrone.id ? newDrone : d))
+      );
+
+      toast.success("Drone updated successfully");
+      setDialogOpen(false);
+    } catch {
+      toast.error("Failed to update drone");
+    }
+  };
+
+  /* const handleDelete = (droneId: string) => {
+    // TODO: Make API DELETE call here
     setDrones((prev) => prev.filter((d) => d.id !== droneId));
     toast.success("Drone deleted successfully");
+  }; */
+
+  const handleDelete = async (droneId: string) => {
+    try {
+      const res = await fetch(`/api/drones/${droneId}`, {
+        method: "DELETE",
+      });
+
+      if (!res.ok) throw new Error("Failed to delete");
+
+      setDrones((prev) => prev.filter((d) => d.id !== droneId));
+      toast.success("Drone deleted successfully");
+    } catch {
+      toast.error("Failed to delete drone");
+    }
   };
+
+  useEffect(() => {
+    const fetchDrones = async () => {
+      try {
+        const res = await fetch("/api/drones");
+        if (!res.ok) throw new Error("Failed to fetch");
+        const data: Drone[] = await res.json();
+        setDrones(data);
+      } catch {
+        toast.error("Failed to fetch drones");
+      }
+    };
+
+    fetchDrones();
+  }, []);
 
   return (
     <>
@@ -136,19 +169,23 @@ export function DroneTable() {
         columns={droneColumns(handleEdit, handleDelete, handleView)}
         data={drones}
       />
+
       {editingDrone && (
         <EditDroneDialog
           open={dialogOpen}
           onOpenChange={setDialogOpen}
           drone={editingDrone}
+          onSubmit={handleEditSubmit}
         />
       )}
-      {/* 👉 Add this at the bottom of your JSX */}
-      <DronePreviewDrawer
-        open={drawerOpen}
-        onOpenChange={setDrawerOpen}
-        drone={selectedDrone}
-      />
+
+      {selectedDrone && (
+        <DronePreviewDrawer
+          open={drawerOpen}
+          onOpenChange={setDrawerOpen}
+          drone={selectedDrone}
+        />
+      )}
     </>
   );
 }

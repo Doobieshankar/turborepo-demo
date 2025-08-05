@@ -1,6 +1,6 @@
-"use client";
+/* "use client";
 
-import { Drone } from "./data";
+import { Drone } from "@prisma/client";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -50,3 +50,51 @@ export const DeleteDroneDialog: React.FC<DeleteDroneDialogProps> = ({
     </Dialog>
   );
 };
+ */
+"use client";
+
+import { Drone } from "@prisma/client";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+
+interface DeleteDroneDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  drone: Drone;
+  onDelete: () => void;
+}
+
+export function DeleteDroneDialog({
+  open,
+  onOpenChange,
+  drone,
+  onDelete,
+}: DeleteDroneDialogProps) {
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Delete Drone</DialogTitle>
+        </DialogHeader>
+        <p>
+          Are you sure you want to delete the drone{" "}
+          <strong>{drone.name}</strong>?
+        </p>
+        <DialogFooter className="mt-4">
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            Cancel
+          </Button>
+          <Button variant="destructive" onClick={onDelete}>
+            Delete
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}

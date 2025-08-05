@@ -1,6 +1,6 @@
 "use client";
 
-import { Drone } from "./data";
+import { Drone } from "@prisma/client";
 import {
   Drawer,
   DrawerTrigger,
